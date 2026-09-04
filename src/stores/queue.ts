@@ -4,6 +4,7 @@ import { jobsRepo } from "@/lib/db";
 import { api, asFriendly, notify, onDownloadEvent } from "@/lib/tauri";
 import { detectPlatform, platformFromExtractor } from "@/lib/platform";
 import { uid } from "@/lib/utils";
+import { t } from "@/i18n";
 import { useSettings } from "./settings";
 import { useHistory } from "./history";
 
@@ -37,6 +38,10 @@ interface QueueStore {
   select: (id: string | null) => void;
   moveSelection: (delta: number) => void;
   expand: (id: string | null) => void;
+  /** New full ordering of job ids (from drag-to-reorder). */
+  reorder: (ids: string[]) => void;
+  /** Edit options of an item that hasn't started (queued / paused / failed / canceled). */
+  setOptions: (id: string, patch: Partial<DownloadOptions>) => void;
   handleEvent: (e: DownloadEvent) => void;
   tick: () => void;
 }
@@ -170,9 +175,9 @@ export const useQueue = create<QueueStore>()((set, get) => {
     if (busy || (sessionCompleted === 0 && sessionFailed === 0)) return;
     if (useSettings.getState().notifications) {
       const parts = [];
-      if (sessionCompleted) parts.push(`${sessionCompleted} finished`);
-      if (sessionFailed) parts.push(`${sessionFailed} failed`);
-      void notify("Grab — queue complete", parts.join(", "));
+      if (sessionCompleted) parts.push(t("notify.finished", { n: sessionCompleted }));
+      if (sessionFailed) parts.push(t("notify.failed", { n: sessionFailed }));
+      void notify(t("notify.title"), parts.join(", "));
     }
     sessionCompleted = 0;
     sessionFailed = 0;
@@ -355,6 +360,25 @@ export const useQueue = create<QueueStore>()((set, get) => {
     },
 
     expand: (id) => set({ expandedId: id, selectedId: id ?? get().selectedId }),
+
+    reorder: (ids) => {
+      const { jobs, order } = get();
+      // Ignore stale lists (e.g. an item was removed mid-drag).
+      if (ids.length !== order.length || ids.some((id) => !jobs[id])) return;
+      const next = { ...jobs };
+      ids.forEach((id, i) => {
+        next[id] = { ...next[id], sortOrder: i + 1 };
+      });
+      set({ jobs: next, order: ids });
+      ids.forEach((id) => persistSoon(next[id], 300));
+      get().tick();
+    },
+
+    setOptions: (id, patch) => {
+      const j = get().jobs[id];
+      if (!j || j.status === "downloading" || j.status === "completed") return;
+      update(id, { options: { ...j.options, ...patch } });
+    },
 
     handleEvent: (e) => {
       const job = get().jobs[e.jobId];

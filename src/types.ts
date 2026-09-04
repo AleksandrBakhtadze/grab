@@ -11,7 +11,10 @@ export type Platform =
   | "soundcloud"
   | "dailymotion"
   | "bilibili"
+  | "spotify"
   | "other";
+
+export type Language = "en" | "ka";
 
 export type JobStatus = "queued" | "downloading" | "paused" | "completed" | "failed" | "canceled";
 export type Phase = "downloading" | "merging" | "converting" | "postprocessing";
@@ -53,6 +56,9 @@ export interface DownloadOptions {
   subtitleLangs: string;
   embedThumbnail: boolean;
   embedMetadata: boolean;
+  /** Clip range as "mm:ss" / "hh:mm:ss" / seconds. Empty strings = whole file. */
+  clipStart: string;
+  clipEnd: string;
 }
 
 export interface Job {
@@ -145,6 +151,7 @@ export interface Settings {
   rateLimit: string;
   cookiesFromBrowser: CookieBrowser;
   theme: Theme;
+  language: Language;
   notifications: boolean;
   clipboardWatch: boolean;
   legalAccepted: boolean;
@@ -155,11 +162,18 @@ export interface StagedItem {
   key: string;
   url: string;
   platform: Platform;
-  state: "loading" | "ready" | "error";
+  /**
+   * `choice`  — link is both a video and a playlist; ask before fetching.
+   * `loading` — fetching metadata.
+   * `ready`   — fetched; if `askScope` is set the playlist prompt is still open.
+   */
+  state: "choice" | "loading" | "ready" | "error";
   info?: MediaInfo;
   error?: FriendlyError;
   /** For playlists: which entry ids are ticked. */
   selected: string[];
+  /** Playlist result waiting for "first only / whole playlist". */
+  askScope?: boolean;
 }
 
 export type DownloadEvent =

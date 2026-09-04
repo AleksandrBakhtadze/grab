@@ -15,6 +15,9 @@ pub struct MetadataRequest {
     pub url: String,
     pub cookies_from_browser: Option<String>,
     pub proxy: Option<String>,
+    /// For links that are both a video and a playlist (`watch?v=…&list=…`):
+    /// `true` (default) → just the video, `false` → the whole playlist.
+    pub no_playlist: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -201,10 +204,14 @@ pub async fn fetch_metadata(app: AppHandle, req: MetadataRequest) -> Result<Medi
         ));
     }
 
+    if crate::commands::spotify::is_spotify(&url) {
+        return crate::commands::spotify::resolve_spotify(&url).await;
+    }
+
     let mut args: Vec<String> = vec![
         "--dump-single-json".into(),
         "--flat-playlist".into(),
-        "--no-playlist".into(),
+        if req.no_playlist.unwrap_or(true) { "--no-playlist" } else { "--yes-playlist" }.into(),
         "--skip-download".into(),
         "--no-warnings".into(),
         "--no-colors".into(),

@@ -245,6 +245,23 @@ If it is lost, installed copies can never verify another update and users must r
 
 ---
 
+## Features beyond the basics
+
+- **Clip a range.** Tick *Clip* in the format picker and enter `from` / `to` (`mm:ss`, `hh:mm:ss`,
+  or seconds; leave one side blank for start/end). yt-dlp fetches only that section through ffmpeg
+  with exact keyframe cuts. Clipped jobs show an indeterminate bar — ffmpeg reports no byte progress.
+- **Playlist prompt.** A YouTube `watch?v=…&list=…` link asks *Just this video* or *Whole playlist*
+  before fetching. Any playlist result (YouTube, Spotify, SoundCloud sets…) then asks *First only* /
+  *Whole playlist* / *Let me pick*. Quick-queue paths (Ctrl+V, drag-drop, clipboard chip) route
+  playlist-looking links through this prompt instead of downloading everything.
+- **Spotify.** yt-dlp cannot download Spotify (DRM). Grab reads the public embed page for a track,
+  album, or playlist, and matches each track to the best YouTube result (`ytsearch1:artist - title`),
+  saved as audio. Private playlists can't be read — make them public in Spotify first.
+- **Reorder the queue** by dragging the grip on the left of a card. **Edit format** of any item that
+  hasn't started from its detail view (double-click or Enter).
+- **Languages:** English and Georgian (ქართული). Picked automatically from the system language;
+  change it under Settings → App.
+
 ## Keyboard
 
 | Keys | Action |

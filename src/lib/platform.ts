@@ -20,8 +20,44 @@ export const PLATFORMS: Record<Platform, PlatformMeta> = {
   soundcloud: { label: "SoundCloud", hue: "#FF5500", hosts: /(^|\.)(soundcloud\.com|snd\.sc)$/i },
   dailymotion: { label: "Dailymotion", hue: "#0066DC", hosts: /(^|\.)(dailymotion\.com|dai\.ly)$/i },
   bilibili: { label: "Bilibili", hue: "#00A1D6", hosts: /(^|\.)(bilibili\.com|b23\.tv)$/i },
+  spotify: { label: "Spotify", hue: "#1DB954", hosts: /(^|\.)(open\.spotify\.com|spotify\.com)$/i },
   other: { label: "Web", hue: "#8A8A8A", hosts: /$^/ },
 };
+
+/** `watch?v=…&list=…` (or youtu.be/ID?list=…): both a video and a playlist. */
+export function isMixedYoutubeUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./, "").toLowerCase();
+    if (!/(^|\.)(youtube\.com|youtu\.be|music\.youtube\.com)$/.test(host)) return false;
+    const list = u.searchParams.get("list");
+    if (!list || list.startsWith("RD")) return false; // RD… = auto-generated Mix, treat as single video
+    const hasVideo = host.endsWith("youtu.be") ? u.pathname.length > 1 : !!u.searchParams.get("v") || u.pathname.startsWith("/shorts/");
+    return hasVideo;
+  } catch {
+    return false;
+  }
+}
+
+/** Anything that will resolve to a list of items rather than one file. */
+export function looksLikePlaylist(url: string): boolean {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./, "").toLowerCase();
+    const p = u.pathname.toLowerCase();
+    if (/(^|\.)spotify\.com$/.test(host)) return /\/(playlist|album)\//.test(p);
+    if (/(^|\.)(youtube\.com|music\.youtube\.com)$/.test(host)) {
+      if (p.startsWith("/playlist")) return true;
+      if (/^\/(@[^/]+|channel\/|c\/|user\/)/.test(p)) return true;
+      return isMixedYoutubeUrl(url);
+    }
+    if (/(^|\.)soundcloud\.com$/.test(host)) return /\/sets\//.test(p);
+    if (/(^|\.)vimeo\.com$/.test(host)) return /\/(showcase|album|channels)\//.test(p);
+    return false;
+  } catch {
+    return false;
+  }
+}
 
 export function detectPlatform(url: string): Platform {
   let host = "";
@@ -51,6 +87,7 @@ export function platformFromExtractor(extractor: string, fallback: Platform): Pl
   if (e.startsWith("soundcloud")) return "soundcloud";
   if (e.startsWith("dailymotion")) return "dailymotion";
   if (e.startsWith("bilibili")) return "bilibili";
+  if (e.startsWith("spotify")) return "spotify";
   return fallback;
 }
 

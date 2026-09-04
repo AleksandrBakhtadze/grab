@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { readClipboardText } from "@/lib/tauri";
 import { extractUrls, isMac } from "@/lib/utils";
+import { t } from "@/i18n";
 import { useUi } from "@/stores/ui";
 import { useQueue } from "@/stores/queue";
 
@@ -46,13 +47,12 @@ export function useShortcuts() {
         const text = await readClipboardText();
         const urls = extractUrls(text);
         if (!urls.length) {
-          ui.showToast("No links on the clipboard", "error");
+          ui.showToast(t("noLinksClipboard"), "error");
           return;
         }
         ui.setView("queue");
-        await q.quickQueue(urls);
         ui.markClipboardSeen(text.trim());
-        ui.showToast(urls.length === 1 ? "Queued 1 link" : `Queued ${urls.length} links`);
+        await ui.quickOrStage(urls);
         return;
       }
 

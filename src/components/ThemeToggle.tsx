@@ -2,6 +2,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Moon, Sun } from "lucide-react";
 import { resolveTheme, useSettings } from "@/stores/settings";
 import { springSnappy, fade } from "@/lib/motion";
+import { useT } from "@/i18n";
 import { Tip } from "@/components/ui/tooltip";
 
 /**
@@ -12,9 +13,11 @@ import { Tip } from "@/components/ui/tooltip";
 export function ThemeToggle() {
   const theme = useSettings((s) => s.theme);
   const set = useSettings((s) => s.set);
+  const t = useT();
   const reduced = useReducedMotion();
   const resolved = resolveTheme(theme);
   const next = resolved === "dark" ? "light" : "dark";
+  const label = t("theme.switch", { theme: t(next === "dark" ? "theme.dark" : "theme.light") });
 
   const variants = reduced
     ? { initial: { opacity: 0 }, animate: { opacity: 1, transition: fade }, exit: { opacity: 0, transition: fade } }
@@ -25,10 +28,10 @@ export function ThemeToggle() {
       };
 
   return (
-    <Tip label={`Switch to ${next} theme`}>
+    <Tip label={label}>
       <button
         type="button"
-        aria-label={`Switch to ${next} theme`}
+        aria-label={label}
         onClick={() => set({ theme: next })}
         className="no-drag relative flex h-7 w-7 items-center justify-center rounded-md text-fg-muted transition-colors hover:bg-sunken hover:text-fg focus-ring"
       >

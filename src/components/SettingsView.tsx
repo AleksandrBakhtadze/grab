@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { FolderOpen, RefreshCw, Scale, Sparkles } from "lucide-react";
-import type { CookieBrowser, Theme } from "@/types";
+import type { CookieBrowser, Language, Theme } from "@/types";
 import { api, isTauri, openExternal, pickDirectory } from "@/lib/tauri";
 import { appVersion, useUpdater } from "@/lib/updater";
+import { modKey } from "@/lib/utils";
+import { LANGUAGES, useT } from "@/i18n";
 import { useSettings } from "@/stores/settings";
 import { useUi } from "@/stores/ui";
 import { Button } from "@/components/ui/button";
@@ -11,7 +13,6 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FormatPicker } from "./FormatPicker";
-import { LEGAL_TEXT } from "./LegalDialog";
 
 const TEMPLATES = [
   { label: "Title [id]", value: "%(title)s [%(id)s].%(ext)s" },
@@ -22,7 +23,6 @@ const TEMPLATES = [
 ];
 
 const BROWSERS: { id: CookieBrowser; label: string }[] = [
-  { id: "", label: "Off" },
   { id: "chrome", label: "Chrome" },
   { id: "firefox", label: "Firefox" },
   { id: "edge", label: "Edge" },
@@ -34,6 +34,7 @@ const BROWSERS: { id: CookieBrowser; label: string }[] = [
 ];
 
 export function SettingsView() {
+  const t = useT();
   const s = useSettings();
   const showToast = useUi((s) => s.showToast);
   const [ytdlp, setYtdlp] = useState<string>("…");
@@ -63,11 +64,11 @@ export function SettingsView() {
       const r = await api.updateYtdlp();
       setUpdateLog(r.output);
       if (r.version) setYtdlp(r.version);
-      showToast(r.updated ? `yt-dlp updated to ${r.version ?? "latest"}` : "yt-dlp is already up to date");
+      showToast(r.updated ? t("set.ytdlpUpdated", { v: r.version ?? "latest" }) : t("set.ytdlpLatest"));
     } catch (e: unknown) {
       const err = e as { title?: string; message?: string; raw?: string };
       setUpdateLog(err?.raw || err?.message || String(e));
-      showToast(err?.title ?? "Update failed", "error");
+      showToast(err?.title ?? t("set.updateFailed"), "error");
     } finally {
       setUpdating(false);
     }
@@ -76,8 +77,8 @@ export function SettingsView() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-[720px] px-6 py-6">
-        <Section title="Output">
-          <Field label="Save to">
+        <Section title={t("set.output")}>
+          <Field label={t("set.saveTo")}>
             <div className="flex gap-2">
               <Input value={s.outputDir} onChange={(e) => s.set({ outputDir: e.target.value })} spellCheck={false} className="font-mono text-xs" />
               <Button
@@ -87,39 +88,39 @@ export function SettingsView() {
                   if (dir) s.set({ outputDir: dir });
                 }}
               >
-                <FolderOpen className="h-3.5 w-3.5" /> Browse
+                <FolderOpen className="h-3.5 w-3.5" /> {t("set.browse")}
               </Button>
             </div>
           </Field>
-          <Field label="Filename template" hint="yt-dlp output template syntax. Use / to create sub-folders.">
+          <Field label={t("set.template")} hint={t("set.templateHint")}>
             <div className="flex gap-2">
               <Input value={s.filenameTemplate} onChange={(e) => s.set({ filenameTemplate: e.target.value })} spellCheck={false} className="font-mono text-xs" />
-              <Select value={TEMPLATES.some((t) => t.value === s.filenameTemplate) ? s.filenameTemplate : "custom"} onValueChange={(v) => v !== "custom" && s.set({ filenameTemplate: v })}>
-                <SelectTrigger className="w-44" aria-label="Template presets">
-                  <SelectValue placeholder="Presets" />
+              <Select value={TEMPLATES.some((x) => x.value === s.filenameTemplate) ? s.filenameTemplate : "custom"} onValueChange={(v) => v !== "custom" && s.set({ filenameTemplate: v })}>
+                <SelectTrigger className="w-44" aria-label={t("set.presets")}>
+                  <SelectValue placeholder={t("set.presets")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {TEMPLATES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
+                  {TEMPLATES.map((x) => (
+                    <SelectItem key={x.value} value={x.value}>
+                      {x.label}
                     </SelectItem>
                   ))}
-                  <SelectItem value="custom">Custom</SelectItem>
+                  <SelectItem value="custom">{t("set.custom")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </Field>
         </Section>
 
-        <Section title="Default format" hint="Applied to quick-queued links (⌘/Ctrl+V, drag & drop, clipboard chip) and pre-filled in the picker.">
-          <FormatPicker options={s.defaultOptions} onChange={s.setOptions} compact />
+        <Section title={t("set.defaultFormat")} hint={t("set.defaultFormatHint", { mod: modKey })}>
+          <FormatPicker options={s.defaultOptions} onChange={s.setOptions} compact noClip />
         </Section>
 
-        <Section title="Downloads">
+        <Section title={t("set.downloads")}>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Field label="Concurrent downloads">
+            <Field label={t("set.concurrency")}>
               <Select value={String(s.concurrency)} onValueChange={(v) => s.set({ concurrency: Number(v) })}>
-                <SelectTrigger aria-label="Concurrency">
+                <SelectTrigger aria-label={t("set.concurrency")}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -131,24 +132,25 @@ export function SettingsView() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Rate limit" hint="e.g. 5M, 500K. Blank = unlimited.">
-              <Input value={s.rateLimit} onChange={(e) => s.set({ rateLimit: e.target.value })} placeholder="unlimited" spellCheck={false} />
+            <Field label={t("set.rateLimit")} hint={t("set.rateLimitHint")}>
+              <Input value={s.rateLimit} onChange={(e) => s.set({ rateLimit: e.target.value })} placeholder={t("set.unlimited")} spellCheck={false} />
             </Field>
-            <Field label="Proxy" hint="http://, https://, socks5://">
-              <Input value={s.proxy} onChange={(e) => s.set({ proxy: e.target.value })} placeholder="none" spellCheck={false} />
+            <Field label={t("set.proxy")} hint={t("set.proxyHint")}>
+              <Input value={s.proxy} onChange={(e) => s.set({ proxy: e.target.value })} placeholder={t("set.none")} spellCheck={false} />
             </Field>
           </div>
         </Section>
 
-        <Section title="Access" hint="For private, members-only, or age-restricted content, Grab can reuse the session cookies of a browser you're logged into. Close that browser first on Windows — Chrome locks its cookie store while running.">
-          <Field label="Use cookies from browser">
+        <Section title={t("set.access")} hint={t("set.accessHint")}>
+          <Field label={t("set.cookies")}>
             <Select value={s.cookiesFromBrowser || "off"} onValueChange={(v) => s.set({ cookiesFromBrowser: (v === "off" ? "" : v) as CookieBrowser })}>
-              <SelectTrigger className="w-56" aria-label="Cookies from browser">
+              <SelectTrigger className="w-56" aria-label={t("set.cookies")}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="off">{t("set.off")}</SelectItem>
                 {BROWSERS.map((b) => (
-                  <SelectItem key={b.id || "off"} value={b.id || "off"}>
+                  <SelectItem key={b.id} value={b.id}>
                     {b.label}
                   </SelectItem>
                 ))}
@@ -157,32 +159,48 @@ export function SettingsView() {
           </Field>
         </Section>
 
-        <Section title="App">
+        <Section title={t("set.app")}>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Theme">
-              <Select value={s.theme} onValueChange={(v) => s.set({ theme: v as Theme })}>
-                <SelectTrigger aria-label="Theme">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="system">Follow system</SelectItem>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
+            <div className="space-y-4">
+              <Field label={t("set.language")}>
+                <Select value={s.language} onValueChange={(v) => s.set({ language: v as Language })}>
+                  <SelectTrigger aria-label={t("set.language")}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LANGUAGES.map((l) => (
+                      <SelectItem key={l.id} value={l.id}>
+                        {l.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label={t("set.theme")}>
+                <Select value={s.theme} onValueChange={(v) => s.set({ theme: v as Theme })}>
+                  <SelectTrigger aria-label={t("set.theme")}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="system">{t("set.themeSystem")}</SelectItem>
+                    <SelectItem value="light">{t("set.themeLight")}</SelectItem>
+                    <SelectItem value="dark">{t("set.themeDark")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
             <div className="space-y-3 pt-1">
-              <Row label="Notify when the queue finishes">
+              <Row label={t("set.notify")}>
                 <Switch checked={s.notifications} onCheckedChange={(v) => s.set({ notifications: v })} />
               </Row>
-              <Row label="Watch clipboard for links on focus">
+              <Row label={t("set.clipboard")}>
                 <Switch checked={s.clipboardWatch} onCheckedChange={(v) => s.set({ clipboardWatch: v })} />
               </Row>
             </div>
           </div>
         </Section>
 
-        <Section title="yt-dlp & ffmpeg" hint="Site extractors break often. Updating yt-dlp fixes most 'unable to extract' and 403 errors without waiting for a new Grab release.">
+        <Section title={t("set.tools")} hint={t("set.toolsHint")}>
           <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-sunken px-3 py-2 text-xs">
             <span>
               yt-dlp <span className="num font-mono text-fg-muted">{ytdlp}</span>
@@ -192,55 +210,55 @@ export function SettingsView() {
             </span>
             <Button size="sm" variant="secondary" className="ml-auto" onClick={() => void update()} disabled={updating || !isTauri}>
               <RefreshCw className={updating ? "h-3.5 w-3.5 animate-spin motion-reduce:animate-none" : "h-3.5 w-3.5"} />
-              {updating ? "Updating…" : "Update yt-dlp"}
+              {updating ? t("set.updating") : t("set.updateYtdlp")}
             </Button>
           </div>
           {updateLog && <pre className="mt-2 max-h-32 overflow-auto rounded-md border border-border bg-surface p-2 font-mono text-2xs text-fg-muted select-text">{updateLog}</pre>}
         </Section>
 
-        <Section title="App updates" hint="Grab checks GitHub Releases on launch. Updates are signed and verified before they run.">
+        <Section title={t("set.appUpdates")} hint={t("set.appUpdatesHint")}>
           <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-sunken px-3 py-2 text-xs">
             <span>
               Grab <span className="num font-mono text-fg-muted">{version}</span>
             </span>
             <span className="text-fg-muted">
-              {upd.phase === "checking" && "Checking…"}
-              {upd.phase === "upToDate" && "You're on the latest version."}
-              {upd.phase === "available" && `Version ${upd.version} is available.`}
-              {(upd.phase === "downloading" || upd.phase === "installing" || upd.phase === "ready") && "Updating…"}
-              {upd.phase === "error" && `Couldn't check: ${upd.error}`}
+              {upd.phase === "checking" && t("set.checking")}
+              {upd.phase === "upToDate" && t("set.latest")}
+              {upd.phase === "available" && t("set.available", { v: upd.version ?? "" })}
+              {(upd.phase === "downloading" || upd.phase === "installing" || upd.phase === "ready") && t("set.updatingApp")}
+              {upd.phase === "error" && t("set.checkFailed", { e: upd.error ?? "" })}
             </span>
             <div className="ml-auto flex gap-2">
               {upd.phase === "available" ? (
                 <Button size="sm" onClick={() => void upd.install()}>
-                  <Sparkles className="h-3.5 w-3.5" /> Update to {upd.version}
+                  <Sparkles className="h-3.5 w-3.5" /> {t("set.updateTo", { v: upd.version ?? "" })}
                 </Button>
               ) : (
                 <Button size="sm" variant="secondary" onClick={() => void upd.check()} disabled={upd.phase === "checking" || !isTauri}>
                   <RefreshCw className={upd.phase === "checking" ? "h-3.5 w-3.5 animate-spin motion-reduce:animate-none" : "h-3.5 w-3.5"} />
-                  Check for updates
+                  {t("set.checkUpdates")}
                 </Button>
               )}
             </div>
           </div>
         </Section>
 
-        <Section title="Responsible use">
+        <Section title={t("set.legal")}>
           <div className="flex gap-3 rounded-md border border-border bg-sunken p-3 text-xs leading-[18px] text-fg-muted">
             <Scale className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-            <p>{LEGAL_TEXT}</p>
+            <p>{t("legal.text")}</p>
           </div>
         </Section>
 
         <div className="mt-8 flex items-center justify-between text-2xs text-fg-faint">
           <span>
-            Grab {version} · made by <span className="text-fg-muted">Aleksandre Bakhtadze</span> · built on yt-dlp + ffmpeg ·{" "}
+            Grab {version} · {t("set.madeBy")} <span className="text-fg-muted">Aleksandre Bakhtadze</span> · {t("set.builtOn")} ·{" "}
             <button type="button" className="hover:text-fg focus-ring rounded-sm" onClick={() => void openExternal("https://github.com/AleksandrBakhtadze/grab")}>
               GitHub
             </button>
           </span>
           <button type="button" className="hover:text-fg focus-ring rounded-sm" onClick={() => s.reset()}>
-            Reset settings
+            {t("set.reset")}
           </button>
         </div>
       </div>

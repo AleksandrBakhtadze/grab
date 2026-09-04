@@ -27,6 +27,8 @@ file is for working on the code.
 - `gh` stores its token in the Windows keyring, so `gh` calls must run outside the sandbox.
 - Remote: https://github.com/AleksandrBakhtadze/grab (private), branch `main`.
 - Temp is on C:, project on D: — use copy+delete, not rename, when moving files between them.
+- **Never rewrite UTF-8 files with PowerShell 5.1 `Get-Content -Raw | Set-Content`** — it reads as
+  ANSI and double-encodes non-ASCII (`—` → `â€”`). Use the Edit tool, or keep those files ASCII.
 
 ## Architecture (the parts that aren't obvious from the file tree)
 
@@ -59,6 +61,25 @@ file is for working on the code.
   stages previews first and commits on "Add to queue".
 - **Errors**: `src-tauri/src/errors.rs` maps yt-dlp stderr to `FriendlyError { code, title, message,
   suggestion, raw }`. First matching regex wins; keep specific rules above generic ones.
+- **Staging prompts** (`src/stores/ui.ts`): a staged item is `choice` (mixed video+playlist link,
+  ask before fetch → `resolveChoice` passes `noPlaylist`), `loading`, `ready`, or `error`. A playlist
+  result starts with `askScope: true` and nothing selected until `setScope("first"|"all"|"pick")`.
+  `commit()` skips items still asking. `quickOrStage()` is the single entry point for Ctrl+V /
+  drag-drop / clipboard chip: `looksLikePlaylist()` links get staged, singles quick-queue.
+- **Spotify** (`src-tauri/src/commands/spotify.rs`): no yt-dlp support (DRM). We parse
+  `open.spotify.com/embed/<kind>/<id>` → `__NEXT_DATA__` → `entity` (`trackList` for playlist/album,
+  `artists`/`duration` for track) and emit `ytsearch1:<artists> - <title>` URLs. Frontend forces
+  audio mode for Spotify items. reqwest is configured exactly like tauri-plugin-updater's
+  (`rustls-no-provider` + ring) so no second TLS stack is compiled; `ensure_tls()` installs ring.
+- **Clip range**: `DownloadOptions.clipStart/clipEnd` → `--download-sections "*a-b"
+  --force-keyframes-at-cuts`. Via ffmpeg, so no byte progress; `QueueCard` shows an indeterminate bar
+  when `isClip(job)` and `percent == null`. Settings' default picker passes `noClip`.
+- **Reorder**: `Reorder.Group`/`Reorder.Item` (framer) with `dragListener={false}` and a grip button
+  that calls `controls.start(e)`, so clicks/dblclicks on the card still select/expand.
+  `queue.reorder(ids)` rewrites `sortOrder` and persists.
+- **i18n** (`src/i18n.ts`): `useT()` in components, `t()` in stores/hooks. Keys are the English
+  identifiers; `ka` falls back to `en` per key. Add a key to `en` first (it's the type source), then
+  `ka`. Rust `FriendlyError` strings stay English on purpose.
 - **Platform overrides**: `tauri.conf.json` is Windows-first (NSIS + MSI). `tauri.macos.conf.json`
   replaces the whole window object (JSON merge patch replaces arrays) for the overlay titlebar and
   app/dmg targets; `tauri.linux.conf.json` sets deb/appimage.

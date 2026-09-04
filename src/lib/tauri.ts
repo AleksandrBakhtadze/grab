@@ -38,7 +38,7 @@ export interface DownloadSettingsPayload {
 }
 
 export const api = {
-  fetchMetadata(req: { url: string; cookiesFromBrowser?: string | null; proxy?: string | null }) {
+  fetchMetadata(req: { url: string; cookiesFromBrowser?: string | null; proxy?: string | null; noPlaylist?: boolean }) {
     return invoke<MediaInfo>("fetch_metadata", { req });
   },
   startDownload(req: { jobId: string; url: string; options: DownloadOptions; settings: DownloadSettingsPayload }) {

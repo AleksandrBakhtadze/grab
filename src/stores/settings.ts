@@ -14,7 +14,17 @@ export const DEFAULT_OPTIONS: DownloadOptions = {
   subtitleLangs: "en.*,-live_chat",
   embedThumbnail: true,
   embedMetadata: true,
+  clipStart: "",
+  clipEnd: "",
 };
+
+function systemLanguage(): "en" | "ka" {
+  try {
+    return (navigator.language || "").toLowerCase().startsWith("ka") ? "ka" : "en";
+  } catch {
+    return "en";
+  }
+}
 
 export const DEFAULT_SETTINGS: Settings = {
   outputDir: "",
@@ -25,6 +35,7 @@ export const DEFAULT_SETTINGS: Settings = {
   rateLimit: "",
   cookiesFromBrowser: "",
   theme: "system",
+  language: systemLanguage(),
   notifications: true,
   clipboardWatch: true,
   legalAccepted: false,

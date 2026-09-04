@@ -2,6 +2,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowDownToLine, X } from "lucide-react";
 import { useUpdater } from "@/lib/updater";
 import { spring, fade } from "@/lib/motion";
+import { useT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "./ProgressBar";
 
@@ -10,6 +11,7 @@ import { ProgressBar } from "./ProgressBar";
  * verifies the signature, runs the installer silently, and relaunches.
  */
 export function UpdateBanner() {
+  const t = useT();
   const phase = useUpdater((s) => s.phase);
   const version = useUpdater((s) => s.version);
   const progress = useUpdater((s) => s.progress);
@@ -26,15 +28,15 @@ export function UpdateBanner() {
   const label =
     phase === "downloading"
       ? progress != null
-        ? `Downloading ${Math.round(progress)}%`
-        : "Downloading…"
+        ? t("upd.downloading", { p: Math.round(progress) })
+        : t("upd.downloadingDots")
       : phase === "installing"
-        ? "Installing…"
+        ? t("upd.installing")
         : phase === "ready"
-          ? "Restarting…"
+          ? t("upd.restarting")
           : phase === "error"
-            ? `Update failed: ${error ?? "unknown error"}`
-            : `Grab ${version} is available`;
+            ? t("upd.failed", { e: error ?? "?" })
+            : t("upd.available", { v: version ?? "" });
 
   return (
     <AnimatePresence>
@@ -51,16 +53,16 @@ export function UpdateBanner() {
         {busy && progress != null && <ProgressBar percent={progress} tone="active" className="w-32" height={3} />}
         {phase === "available" && (
           <Button size="sm" className="h-6" onClick={() => void install()}>
-            Update now
+            {t("upd.now")}
           </Button>
         )}
         {phase === "error" && (
           <Button size="sm" variant="secondary" className="h-6" onClick={() => void install()}>
-            Retry
+            {t("upd.retry")}
           </Button>
         )}
         {!busy && (
-          <button type="button" aria-label="Dismiss" onClick={dismiss} className="rounded-sm p-0.5 text-fg-faint hover:text-fg focus-ring">
+          <button type="button" aria-label={t("upd.dismiss")} onClick={dismiss} className="rounded-sm p-0.5 text-fg-faint hover:text-fg focus-ring">
             <X className="h-3.5 w-3.5" />
           </button>
         )}

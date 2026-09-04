@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { extractUrls } from "@/lib/utils";
 import { useUi } from "@/stores/ui";
-import { useQueue } from "@/stores/queue";
 
 /**
  * Accept a link dragged from a browser tab / address bar onto the window.
@@ -41,10 +40,7 @@ export function useDropUrls() {
       if (!text) return;
       e.preventDefault();
       const urls = extractUrls(text.split("\n").filter((l) => !l.startsWith("#")).join("\n"));
-      if (urls.length) {
-        void useQueue.getState().quickQueue(urls);
-        useUi.getState().showToast(urls.length === 1 ? "Queued 1 link" : `Queued ${urls.length} links`);
-      }
+      if (urls.length) void useUi.getState().quickOrStage(urls);
     };
 
     document.addEventListener("dragenter", onEnter);

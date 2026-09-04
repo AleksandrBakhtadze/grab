@@ -35,6 +35,20 @@ pub struct DownloadOptions {
     pub subtitle_langs: String,
     pub embed_thumbnail: bool,
     pub embed_metadata: bool,
+    /// Optional clip range, "mm:ss" / "hh:mm:ss" / seconds. Empty = whole file.
+    #[serde(default)]
+    pub clip_start: Option<String>,
+    #[serde(default)]
+    pub clip_end: Option<String>,
+}
+
+fn clip_section(o: &DownloadOptions) -> Option<String> {
+    let start = o.clip_start.as_deref().map(str::trim).filter(|s| !s.is_empty());
+    let end = o.clip_end.as_deref().map(str::trim).filter(|s| !s.is_empty());
+    if start.is_none() && end.is_none() {
+        return None;
+    }
+    Some(format!("*{}-{}", start.unwrap_or("0"), end.unwrap_or("inf")))
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -150,6 +164,14 @@ pub fn build_args(req: &DownloadRequest) -> Vec<String> {
         a.push(video_selector(&o.quality, &o.container));
         a.push("--merge-output-format".into());
         a.push(o.container.clone());
+    }
+
+    if let Some(section) = clip_section(o) {
+        // Clipping makes yt-dlp fetch the range through ffmpeg, which reports no
+        // byte progress — the UI shows an indeterminate bar for such jobs.
+        a.push("--download-sections".into());
+        a.push(section);
+        a.push("--force-keyframes-at-cuts".into());
     }
 
     if o.embed_metadata {

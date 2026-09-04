@@ -13,6 +13,7 @@ import { Toast } from "@/components/Toast";
 import { Splash } from "@/components/Splash";
 import { UpdateBanner } from "@/components/UpdateBanner";
 import { useUpdater } from "@/lib/updater";
+import { useT } from "@/i18n";
 import { useClipboardWatch } from "@/hooks/useClipboardWatch";
 import { useDropUrls } from "@/hooks/useDropUrls";
 import { useShortcuts } from "@/hooks/useShortcuts";
@@ -31,6 +32,7 @@ export default function App() {
   const concurrency = useSettings((s) => s.concurrency);
   const tick = useQueue((s) => s.tick);
   const reduced = useReducedMotion();
+  const t = useT();
   const [os, setOs] = useState<"macos" | "windows" | "linux" | "other">("other");
 
   const checkUpdate = useUpdater((s) => s.check);
@@ -101,7 +103,7 @@ export default function App() {
                     className="flex h-full w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-accent/60 text-fg"
                   >
                     <Link2 className="h-6 w-6 text-accent" />
-                    <span className="text-[13px] font-medium">Drop to queue with your default format</span>
+                    <span className="text-[13px] font-medium">{t("drop.title")}</span>
                   </motion.div>
                 </motion.div>
               )}

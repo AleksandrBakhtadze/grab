@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useT } from "@/i18n";
 
 const AUTHOR = "Aleksandre Bakhtadze";
 
@@ -9,6 +10,7 @@ const AUTHOR = "Aleksandre Bakhtadze";
  * app underneath — about 1.1 s in total. Reduced motion: a short opacity fade.
  */
 export function Splash() {
+  const t = useT();
   const reduced = useReducedMotion();
   const [open, setOpen] = useState(true);
 
@@ -70,7 +72,9 @@ export function Splash() {
             className="mt-4 text-center"
           >
             <div className="text-xl font-semibold tracking-tightest">Grab</div>
-            <div className="mt-1 text-2xs text-fg-faint">by {AUTHOR}</div>
+            <div className="mt-1 text-2xs text-fg-faint">
+              {t("splash.by")} {AUTHOR}
+            </div>
           </motion.div>
         </motion.div>
       )}

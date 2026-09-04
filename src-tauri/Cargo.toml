@@ -1,7 +1,7 @@
-[package]
+﻿[package]
 name = "grab"
-version = "0.2.0"
-description = "Grab — a calm, dense desktop media downloader built on yt-dlp"
+version = "0.3.0"
+description = "Grab - a calm, dense desktop media downloader built on yt-dlp"
 authors = ["Aleksandre Bakhtadze"]
 license = "MIT"
 edition = "2021"
@@ -31,6 +31,10 @@ tokio = { version = "1", features = ["sync", "rt", "macros", "time", "process"] 
 thiserror = "2"
 regex = "1"
 once_cell = "1"
+# Same reqwest/rustls configuration tauri-plugin-updater uses, so this adds no
+# second TLS stack. Used only to read Spotify's public embed pages.
+reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider"] }
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
 
 [profile.release]
 panic = "abort"

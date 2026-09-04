@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ClipboardPaste, Plus, X } from "lucide-react";
 import { extractUrls, modKey } from "@/lib/utils";
 import { spring, fade } from "@/lib/motion";
+import { useT } from "@/i18n";
 import { useUi } from "@/stores/ui";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +15,7 @@ import { FormatPicker } from "./FormatPicker";
  * Multiple URLs (newline / space separated) are accepted at once.
  */
 export function UrlInput() {
+  const t = useT();
   const [text, setText] = useState("");
   const ref = useRef<HTMLTextAreaElement>(null);
   const reduced = useReducedMotion();
@@ -40,21 +42,24 @@ export function UrlInput() {
   const submit = () => {
     const urls = extractUrls(text);
     if (!urls.length) {
-      if (text.trim()) showToast("That doesn't look like a link", "error");
+      if (text.trim()) showToast(t("input.notLink"), "error");
       return;
     }
     void stage(urls);
     setText("");
   };
 
-  const ready = staged.filter((s) => s.state === "ready");
+  const ready = staged.filter((s) => s.state === "ready" && !s.askScope);
   const readyCount = ready.reduce((n, s) => n + (s.info?.kind === "playlist" ? s.selected.length : 1), 0);
   const loading = staged.some((s) => s.state === "loading");
+  const waitingChoice = staged.some((s) => s.state === "choice" || s.askScope);
   const singleVideo = ready.length === 1 && staged.length === 1 && ready[0].info?.kind === "video" ? ready[0].info : undefined;
+  const allSpotify = staged.length > 0 && staged.every((s) => s.platform === "spotify");
+  const anySpotify = staged.some((s) => s.platform === "spotify");
 
   const onCommit = async () => {
     const n = await commit();
-    if (n > 0) showToast(n === 1 ? "Added 1 item to the queue" : `Added ${n} items to the queue`);
+    if (n > 0) showToast(n === 1 ? t("input.added1") : t("input.addedN", { n }));
   };
 
   const chipVariants = reduced
@@ -62,7 +67,7 @@ export function UrlInput() {
     : { initial: { opacity: 0, y: -6 }, animate: { opacity: 1, y: 0, transition: spring }, exit: { opacity: 0, y: -6, transition: { duration: 0.12 } } };
 
   return (
-    <section className="border-b border-border bg-surface px-6 pb-4 pt-4" aria-label="Add links">
+    <section className="border-b border-border bg-surface px-6 pb-4 pt-4" aria-label={t("input.add")}>
       <div className="relative">
         <Textarea
           ref={ref}
@@ -78,13 +83,13 @@ export function UrlInput() {
           spellCheck={false}
           autoCorrect="off"
           autoCapitalize="off"
-          placeholder="Paste one or more links — YouTube, Instagram, TikTok, X, Reddit, Vimeo…"
+          placeholder={t("input.placeholder")}
           className="min-h-[44px] py-3 pl-4 pr-24 text-[14px] leading-5"
-          aria-label="Links to download"
+          aria-label={t("input.placeholder")}
         />
         <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1">
           <Button size="sm" onClick={submit} disabled={!text.trim()} aria-keyshortcuts="Enter">
-            <Plus className="h-3.5 w-3.5" /> Add
+            <Plus className="h-3.5 w-3.5" /> {t("input.add")}
           </Button>
         </div>
       </div>
@@ -102,12 +107,11 @@ export function UrlInput() {
             >
               <ClipboardPaste className="h-3.5 w-3.5 text-accent" />
               <span className="truncate">
-                Paste detected link{clipboardUrls.length > 1 ? `s (${clipboardUrls.length})` : ""}:{" "}
-                <span className="text-fg-muted">{clipboardUrls[0]}</span>
+                {clipboardUrls.length > 1 ? t("input.clipChipMany", { n: clipboardUrls.length }) : t("input.clipChip")}: <span className="text-fg-muted">{clipboardUrls[0]}</span>
               </span>
               <span
                 role="button"
-                aria-label="Dismiss"
+                aria-label={t("input.dismiss")}
                 onClick={(e) => {
                   e.stopPropagation();
                   markClipboardSeen(lastSeen);
@@ -147,19 +151,18 @@ export function UrlInput() {
             </div>
 
             <div className="mt-3 rounded-lg border border-border bg-elevated p-3">
-              <FormatPicker options={batchOptions} onChange={setBatchOptions} info={singleVideo} />
+              {anySpotify && <p className="mb-2 text-2xs text-fg-faint">{t("input.spotifyHint")}</p>}
+              <FormatPicker options={batchOptions} onChange={setBatchOptions} info={singleVideo} audioOnly={allSpotify} />
             </div>
 
             <div className="mt-3 flex items-center gap-2">
               <Button onClick={onCommit} disabled={readyCount === 0 || loading}>
-                {loading ? "Fetching details…" : readyCount === 1 ? "Add to queue" : `Add ${readyCount} to queue`}
+                {loading ? t("input.fetching") : readyCount <= 1 ? t("input.addToQueue") : t("input.addNToQueue", { n: readyCount })}
               </Button>
               <Button variant="ghost" onClick={clearStaged}>
-                Clear
+                {t("input.clear")}
               </Button>
-              <span className="ml-auto text-2xs text-fg-faint">
-                Tip: {modKey}+V anywhere queues instantly with your default format.
-              </span>
+              <span className="ml-auto text-2xs text-fg-faint">{waitingChoice ? t("input.chooseFirst") : t("input.tip", { mod: modKey })}</span>
             </div>
           </motion.div>
         )}
