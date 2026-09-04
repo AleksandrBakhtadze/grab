@@ -1,0 +1,21 @@
+# Node
+node_modules
+dist
+dist-ssr
+*.local
+
+# Tauri / Rust
+src-tauri/target
+src-tauri/gen/schemas
+
+# Sidecar binaries are downloaded, never committed (see scripts/fetch-sidecars.*)
+src-tauri/binaries/*
+!src-tauri/binaries/.gitkeep
+!src-tauri/binaries/README.md
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db

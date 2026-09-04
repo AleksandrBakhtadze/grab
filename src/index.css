@@ -1,0 +1,134 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Palette — exactly two surfaces per theme plus one accent.
+  Dark:  #0A0A0A surface · #141414 elevated · #1F1F1F borders
+  Light: #FAFAF9 surface · #FFFFFF elevated
+  Values are HSL triplets so Tailwind can apply alpha.
+*/
+@layer base {
+  :root {
+    --surface: 60 9% 98%;        /* #FAFAF9 */
+    --elevated: 0 0% 100%;       /* #FFFFFF */
+    --sunken: 60 5% 95%;         /* #F3F3F1 */
+    --border: 0 0% 90%;          /* #E5E5E5 */
+    --border-strong: 0 0% 82%;   /* #D1D1D1 */
+    --fg: 0 0% 6%;               /* #0F0F0F */
+    --fg-muted: 0 0% 40%;        /* #666666 */
+    --fg-faint: 0 0% 60%;        /* #999999 */
+    --accent: 20 91% 48%;        /* #EA580C */
+    --accent-fg: 0 0% 100%;
+    --accent-soft: 20 91% 48%;   /* used with alpha */
+    --danger: 0 72% 51%;
+    --success: 142 60% 40%;
+    --radius: 12px;
+    color-scheme: light;
+  }
+
+  .dark {
+    --surface: 0 0% 4%;          /* #0A0A0A */
+    --elevated: 0 0% 8%;         /* #141414 */
+    --sunken: 0 0% 6%;           /* #0F0F0F */
+    --border: 0 0% 12%;          /* #1F1F1F */
+    --border-strong: 0 0% 18%;   /* #2E2E2E */
+    --fg: 0 0% 93%;              /* #EDEDED */
+    --fg-muted: 0 0% 58%;        /* #949494 */
+    --fg-faint: 0 0% 38%;        /* #616161 */
+    --accent: 22 100% 62%;       /* #FF7A3D */
+    --accent-fg: 0 0% 4%;
+    --accent-soft: 22 100% 62%;
+    --danger: 0 84% 64%;
+    --success: 142 55% 52%;
+    color-scheme: dark;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    @apply bg-surface text-fg font-sans antialiased text-[13px] leading-5;
+    font-feature-settings: "cv11", "ss01", "calt";
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+    cursor: default;
+  }
+
+  input,
+  textarea,
+  [contenteditable] {
+    user-select: text;
+    cursor: text;
+  }
+
+  ::selection {
+    background: hsl(var(--accent) / 0.3);
+  }
+
+  /* Thin, theme-aware scrollbars. */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border-strong));
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--fg-faint));
+    background-clip: padding-box;
+    border: 3px solid transparent;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  /* Numbers that update live must not jitter. */
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum", "cv11", "ss01";
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
+  }
+
+  /* View Transitions crossfade for theme switching. */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 260ms;
+    animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation-duration: 120ms;
+    }
+  }
+}
+
+@layer utilities {
+  .drag-region {
+    -webkit-app-region: drag;
+  }
+  .no-drag {
+    -webkit-app-region: no-drag;
+  }
+  .focus-ring {
+    @apply outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-0;
+  }
+}

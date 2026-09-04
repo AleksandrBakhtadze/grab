@@ -1,0 +1,39 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capabilities for Grab's main window: window chrome, IPC events, SQLite, clipboard, notifications, dialogs, and the yt-dlp / ffmpeg sidecars.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:event:default",
+    "core:window:allow-start-dragging",
+    "core:window:allow-minimize",
+    "core:window:allow-maximize",
+    "core:window:allow-unmaximize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-is-maximized",
+    "core:window:allow-close",
+    "core:window:allow-set-focus",
+    "core:window:allow-is-focused",
+    "core:app:default",
+    "core:path:default",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        { "name": "binaries/yt-dlp", "sidecar": true, "args": true },
+        { "name": "binaries/ffmpeg", "sidecar": true, "args": true }
+      ]
+    },
+    "shell:allow-spawn",
+    "shell:allow-kill",
+    "sql:default",
+    "sql:allow-load",
+    "sql:allow-execute",
+    "sql:allow-select",
+    "notification:default",
+    "clipboard-manager:allow-read-text",
+    "dialog:allow-open",
+    "opener:default",
+    "os:default"
+  ]
+}
