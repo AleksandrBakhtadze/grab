@@ -1,13 +1,16 @@
 import { AnimatePresence } from "framer-motion";
 import { Pause, Play, Trash2 } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
 import { selectOrderedJobs, selectStats, useQueue } from "@/stores/queue";
 import { Button } from "@/components/ui/button";
 import { QueueCard } from "./QueueCard";
 import { EmptyState } from "./EmptyState";
 
 export function QueueList() {
-  const jobs = useQueue(selectOrderedJobs);
-  const stats = useQueue(selectStats);
+  // Selectors that build a new array/object must be shallow-compared, or
+  // Zustand v5 sees a new snapshot every render and React loops (error #185).
+  const jobs = useQueue(useShallow(selectOrderedJobs));
+  const stats = useQueue(useShallow(selectStats));
   const selectedId = useQueue((s) => s.selectedId);
   const expandedId = useQueue((s) => s.expandedId);
   const clearFinished = useQueue((s) => s.clearFinished);

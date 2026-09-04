@@ -68,6 +68,12 @@ file is for working on the code.
   class (tabular figures) so they don't jitter.
 - **TypeScript**: strict, no unused locals/params. Prefer store selectors (`useQueue((s) => s.x)`)
   over subscribing to the whole store in list items.
+- **Zustand v5 selectors that return a new array/object** (`selectOrderedJobs`, `selectStats`,
+  `selectFiltered`) must be wrapped in `useShallow(...)` from `zustand/react/shallow`. Without it
+  React loops forever (minified error #185) and the app shows a black window.
+- **Smoke-test the production bundle before shipping**: `npm.cmd run build`, `npx vite preview`,
+  then load it in headless Edge with `--enable-logging=stderr --dump-dom` and grep for `CONSOLE` /
+  `Uncaught`. Release builds have no devtools, so this is the fastest way to catch runtime errors.
 - **Rust**: commands return `Result<T, FriendlyError>`; never `unwrap` on user-influenced data.
   Async commands that take `State<'_, _>` must return `Result` (Tauri requirement).
 - Keep the legal notice (`LEGAL_TEXT` in `LegalDialog.tsx`) in both the first-run dialog and Settings.

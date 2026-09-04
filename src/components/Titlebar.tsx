@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Minus, Square, X, Copy } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
 import { useUi, type View } from "@/stores/ui";
 import { selectStats, useQueue } from "@/stores/queue";
 import { formatSpeed } from "@/lib/format";
@@ -18,7 +19,7 @@ const TABS: { id: View; label: string }[] = [
 export function Titlebar({ os }: { os: "macos" | "windows" | "linux" | "other" }) {
   const view = useUi((s) => s.view);
   const setView = useUi((s) => s.setView);
-  const stats = useQueue(selectStats);
+  const stats = useQueue(useShallow(selectStats));
   const reduced = useReducedMotion();
   const [maximized, setMaximized] = useState(false);
 

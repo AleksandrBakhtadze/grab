@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Download, FolderOpen, Search, Trash2, X, History as HistoryIcon } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
 import type { HistoryEntry, Platform } from "@/types";
 import { formatBytes, formatDuration, formatRelative } from "@/lib/format";
 import { PLATFORMS } from "@/lib/platform";
@@ -16,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PlatformBadge } from "./PlatformBadge";
 
 export function HistoryView() {
-  const entries = useHistory(selectFiltered);
+  const entries = useHistory(useShallow(selectFiltered));
   const total = useHistory((s) => s.entries.length);
   const query = useHistory((s) => s.query);
   const setQuery = useHistory((s) => s.setQuery);
