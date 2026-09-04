@@ -58,7 +58,13 @@ export const useUi = create<UiStore>()((set, get) => ({
       state: "loading",
       selected: [],
     }));
-    set({ staged: [...get().staged, ...items], batchOptions: useSettings.getState().defaultOptions });
+    // Only reset the picker when starting a fresh batch, so adding a second
+    // link doesn't wipe format choices already made for the first.
+    const fresh_batch = get().staged.length === 0;
+    set({
+      staged: [...get().staged, ...items],
+      ...(fresh_batch ? { batchOptions: useSettings.getState().defaultOptions } : {}),
+    });
     const s = useSettings.getState();
     await Promise.all(
       items.map(async (it) => {

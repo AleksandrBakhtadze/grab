@@ -193,6 +193,13 @@ static RULES: Lazy<Vec<Rule>> = Lazy::new(|| {
             Some("Reinstall Grab. If you're running from source, place the ffmpeg sidecar in src-tauri/binaries.")
         ),
         rule!(
+            r"(?i)could not copy .*cookie|cookie database|failed to decrypt|could not find .* cookies? (database|file)|unsupported browser|dpapi|keyring",
+            "cookies_locked",
+            "Couldn't read browser cookies",
+            "yt-dlp couldn't open the browser's cookie store. On Windows, Chrome-based browsers lock it while running, and the app must match the browser you're actually logged into.",
+            Some("Close that browser completely (check the tray), retry, or pick a different browser in Settings → Access.")
+        ),
+        rule!(
             r"(?i)no space left|disk full|not enough space|errno 28",
             "disk_full",
             "Out of disk space",

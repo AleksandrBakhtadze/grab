@@ -136,6 +136,15 @@ fn parse_entries(v: &Value) -> Vec<PlaylistEntry> {
     };
     arr.iter()
         .filter(|e| !e.is_null())
+        // A channel URL yields *tabs* (Videos, Shorts, Playlists…) whose entries
+        // are themselves playlists. Queueing one of those as a single job would
+        // silently download an entire playlist, so skip nested containers and
+        // tell the user to paste the tab URL instead (e.g. /videos).
+        .filter(|e| {
+            let t = s(e, "_type").unwrap_or_default();
+            let ie = s(e, "ie_key").unwrap_or_default();
+            t != "playlist" && !ie.ends_with("Tab") && !ie.ends_with("Playlist")
+        })
         .enumerate()
         .filter_map(|(i, e)| {
             let url = s(e, "url").or_else(|| s(e, "webpage_url"))?;

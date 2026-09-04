@@ -2,10 +2,11 @@
 //!
 //! We hand yt-dlp `--progress-template` strings that make it print one JSON
 //! object per progress tick, prefixed with a sentinel so we can pick them out
-//! of the stream cheaply. A missing field would normally render as a bare
-//! `NA`, which is not JSON, so every optional field carries a `|null` default
-//! (yt-dlp's output-template default syntax). The parser is still lenient and
-//! also tolerates a quoted `"NA"` for safety.
+//! of the stream cheaply. yt-dlp's `j` conversion JSON-encodes whatever value
+//! it has, so a missing field arrives as the *string* `"NA"` (or `"null"`
+//! where we give a `|null` default) rather than a JSON null. Every field is
+//! therefore read leniently: numbers must be numbers, strings must not be
+//! one of those placeholders.
 //!
 //! Note: because `--print` implies `--quiet`, yt-dlp routes its "screen"
 //! output (progress included) to **stderr**. The reader therefore feeds both
@@ -107,7 +108,7 @@ fn lenient_f64(v: Option<&Value>) -> Option<f64> {
 
 fn lenient_str(v: Option<&Value>) -> Option<String> {
     match v? {
-        Value::String(s) if s != "NA" && !s.is_empty() => Some(s.clone()),
+        Value::String(s) if s != "NA" && s != "null" && !s.is_empty() => Some(s.clone()),
         _ => None,
     }
 }
@@ -186,6 +187,20 @@ mod tests {
                 assert_eq!(p.total, Some(1024));
                 assert_eq!(p.percent, Some(50.0));
                 assert_eq!(p.speed, Some(100.5));
+                assert_eq!(p.frag_index, None);
+            }
+            other => panic!("unexpected {other:?}"),
+        }
+    }
+
+    #[test]
+    fn placeholder_strings_are_none() {
+        let l = r#"GRAB_DL:{"status":"downloading","downloaded":10,"total":"null","totalEstimate":"NA","speed":"null","eta":"NA","elapsed":0.1,"filename":"null","fragIndex":"null","fragCount":"null"}"#;
+        match parse_line(l) {
+            ParsedLine::Progress(p) => {
+                assert_eq!(p.total, None);
+                assert_eq!(p.speed, None);
+                assert_eq!(p.filename, None);
                 assert_eq!(p.frag_index, None);
             }
             other => panic!("unexpected {other:?}"),
