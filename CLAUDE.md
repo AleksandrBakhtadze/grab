@@ -28,7 +28,9 @@ file is for working on the code.
 - Remote: https://github.com/AleksandrBakhtadze/grab (private), branch `main`.
 - Temp is on C:, project on D: — use copy+delete, not rename, when moving files between them.
 - **Never rewrite UTF-8 files with PowerShell 5.1 `Get-Content -Raw | Set-Content`** — it reads as
-  ANSI and double-encodes non-ASCII (`—` → `â€”`). Use the Edit tool, or keep those files ASCII.
+  ANSI and double-encodes non-ASCII (`—` → `â€”`), and `-Encoding utf8` adds a BOM that makes
+  tauri-action fail with "Couldn't parse --config flag as inline JSON". Use the Edit tool. If a BOM
+  sneaks in, strip it with `[IO.File]::WriteAllBytes($f, $bytes[3..])`.
 
 ## Architecture (the parts that aren't obvious from the file tree)
 

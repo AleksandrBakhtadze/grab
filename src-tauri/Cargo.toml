@@ -1,4 +1,4 @@
-﻿[package]
+[package]
 name = "grab"
 version = "0.3.0"
 description = "Grab - a calm, dense desktop media downloader built on yt-dlp"
