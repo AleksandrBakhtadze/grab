@@ -19,3 +19,6 @@ src-tauri/binaries/*
 .idea
 .DS_Store
 Thumbs.db
+
+# Downloaded CI artifacts
+dist-installers
