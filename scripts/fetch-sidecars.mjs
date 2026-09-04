@@ -52,12 +52,27 @@ const isMac = triple.includes("apple");
 const isArm = triple.startsWith("aarch64");
 const ext = isWin ? ".exe" : "";
 
-async function download(url, dest) {
+async function download(url, dest, attempts = 4) {
   console.log(`↓ ${url}`);
-  const res = await fetch(url, { redirect: "follow" });
-  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-  await pipeline(Readable.fromWeb(res.body), createWriteStream(dest));
-  return dest;
+  let lastErr;
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      const res = await fetch(url, { redirect: "follow" });
+      if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+      await pipeline(Readable.fromWeb(res.body), createWriteStream(dest));
+      return dest;
+    } catch (e) {
+      lastErr = e;
+      // GitHub's CDN occasionally drops the connection mid-stream on CI runners.
+      if (i < attempts) {
+        const wait = 2000 * i;
+        console.log(`  retry ${i}/${attempts - 1} in ${wait / 1000}s (${e.code ?? e.message})`);
+        rmSync(dest, { force: true });
+        await new Promise((r) => setTimeout(r, wait));
+      }
+    }
+  }
+  throw lastErr;
 }
 
 function findFile(dir, name) {
