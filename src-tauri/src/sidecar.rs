@@ -39,6 +39,28 @@ pub fn ytdlp_path() -> Option<PathBuf> {
     sidecar_path("yt-dlp")
 }
 
+/// QuickJS-NG binary. yt-dlp needs a JavaScript runtime to solve YouTube's
+/// player challenges; only Deno is enabled by default and we don't ship
+/// that, so we point it at our bundled `qjs` explicitly.
+pub fn qjs_path() -> Option<PathBuf> {
+    sidecar_path("qjs")
+}
+
+/// Arguments every yt-dlp invocation should carry so the bundled tools are
+/// found without relying on PATH: `--ffmpeg-location` and `--js-runtimes`.
+pub fn common_args() -> Vec<String> {
+    let mut a = Vec::new();
+    if let Some(ff) = ffmpeg_path() {
+        a.push("--ffmpeg-location".into());
+        a.push(ff.to_string_lossy().into_owned());
+    }
+    if let Some(q) = qjs_path() {
+        a.push("--js-runtimes".into());
+        a.push(format!("quickjs:{}", q.to_string_lossy()));
+    }
+    a
+}
+
 /// A yt-dlp `Command` with UTF-8 output forced. yt-dlp is a frozen Python
 /// program; on Windows it would otherwise pick the legacy console code page and
 /// mangle non-ASCII titles.

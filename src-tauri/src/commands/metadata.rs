@@ -214,6 +214,7 @@ pub async fn fetch_metadata(app: AppHandle, req: MetadataRequest) -> Result<Medi
         "--retries".into(),
         "2".into(),
     ];
+    args.extend(sidecar::common_args());
     if let Some(b) = req.cookies_from_browser.filter(|b| !b.is_empty()) {
         args.push("--cookies-from-browser".into());
         args.push(b);

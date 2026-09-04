@@ -4,12 +4,16 @@ Tauri bundles every file listed under `bundle.externalBin` in `tauri.conf.json`,
 but it only finds them if the file name ends with the **Rust target triple** of
 the machine you're building on. This folder must therefore contain:
 
-| Platform            | Files                                                                                         |
-| ------------------- | --------------------------------------------------------------------------------------------- |
-| Windows x64         | `yt-dlp-x86_64-pc-windows-msvc.exe`, `ffmpeg-x86_64-pc-windows-msvc.exe`                      |
-| macOS Apple Silicon | `yt-dlp-aarch64-apple-darwin`, `ffmpeg-aarch64-apple-darwin`                                  |
-| macOS Intel         | `yt-dlp-x86_64-apple-darwin`, `ffmpeg-x86_64-apple-darwin`                                    |
-| Linux x64           | `yt-dlp-x86_64-unknown-linux-gnu`, `ffmpeg-x86_64-unknown-linux-gnu`                          |
+| Platform            | Files                                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------------------- |
+| Windows x64         | `yt-dlp-x86_64-pc-windows-msvc.exe`, `ffmpeg-x86_64-pc-windows-msvc.exe`, `qjs-x86_64-pc-windows-msvc.exe` |
+| macOS Apple Silicon | `yt-dlp-aarch64-apple-darwin`, `ffmpeg-aarch64-apple-darwin`, `qjs-aarch64-apple-darwin`               |
+| macOS Intel         | `yt-dlp-x86_64-apple-darwin`, `ffmpeg-x86_64-apple-darwin`, `qjs-x86_64-apple-darwin`                  |
+| Linux x64           | `yt-dlp-x86_64-unknown-linux-gnu`, `ffmpeg-x86_64-unknown-linux-gnu`, `qjs-x86_64-unknown-linux-gnu`   |
+
+`qjs` is QuickJS-NG (https://github.com/quickjs-ng/quickjs, ≥ v0.12.0). yt-dlp requires a JavaScript
+runtime to solve YouTube's player challenges; without one, formats go missing and extraction is
+deprecated. Grab passes `--js-runtimes quickjs:<path>` to every yt-dlp call.
 
 Find your triple with `rustc -vV | findstr host` (Windows) or `rustc -vV | grep host`.
 

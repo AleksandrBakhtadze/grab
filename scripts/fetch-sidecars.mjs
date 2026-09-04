@@ -11,6 +11,9 @@
  *   ffmpeg  → Windows: BtbN GPL static build (github.com/BtbN/FFmpeg-Builds)
  *             macOS:   evermeet.cc static build
  *             Linux:   johnvansickle.com static build
+ *   qjs     → QuickJS-NG (github.com/quickjs-ng/quickjs). yt-dlp needs a JS
+ *             runtime to solve YouTube's player challenges; without one, formats
+ *             go missing and extraction is deprecated. QuickJS-NG is ~2 MB.
  */
 import { execSync } from "node:child_process";
 import { copyFileSync, createWriteStream, existsSync, mkdirSync, readdirSync, rmSync, statSync, chmodSync } from "node:fs";
@@ -126,7 +129,25 @@ async function ffmpeg() {
   }
 }
 
+async function qjs() {
+  const asset = isWin
+    ? "qjs-windows-x86_64.exe"
+    : isMac
+      ? isArm
+        ? "qjs-darwin-arm64"
+        : "qjs-darwin-x86_64"
+      : isArm
+        ? "qjs-linux-aarch64"
+        : "qjs-linux-x86_64";
+  const file = await download(
+    `https://github.com/quickjs-ng/quickjs/releases/latest/download/${asset}`,
+    path.join(tmp, asset),
+  );
+  install(file, "qjs");
+}
+
 console.log(`Target triple: ${triple}`);
 await ytdlp();
 await ffmpeg();
+await qjs();
 console.log("Done. Sidecars are in src-tauri/binaries/.");

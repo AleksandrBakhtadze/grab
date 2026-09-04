@@ -197,11 +197,19 @@ mv ffmpeg-*-static/ffmpeg src-tauri/binaries/ffmpeg-x86_64-unknown-linux-gnu
 chmod +x src-tauri/binaries/*
 ```
 
+### QuickJS (all platforms)
+
+yt-dlp needs a JavaScript runtime to solve YouTube's player challenges; without one it warns that
+extraction is deprecated and some formats go missing. Grab bundles QuickJS-NG (~2 MB) as a third
+sidecar named `qjs-<triple>[.exe]`, downloaded by `npm run sidecars` from
+https://github.com/quickjs-ng/quickjs/releases (assets `qjs-windows-x86_64.exe`, `qjs-darwin-arm64`,
+`qjs-darwin-x86_64`, `qjs-linux-x86_64`). Every yt-dlp call gets `--js-runtimes quickjs:<path>`.
+
 ### How they're registered
 
-- `tauri.conf.json` → `bundle.externalBin: ["binaries/yt-dlp", "binaries/ffmpeg"]`. Tauri strips the
-  triple and copies them **flat** next to the app binary (`yt-dlp.exe`, `ffmpeg.exe`), in `tauri dev`
-  and in every bundle.
+- `tauri.conf.json` → `bundle.externalBin: ["binaries/yt-dlp", "binaries/ffmpeg", "binaries/qjs"]`.
+  Tauri strips the triple and copies them **flat** next to the app binary (`yt-dlp.exe`,
+  `ffmpeg.exe`, `qjs.exe`), in `tauri dev` and in every bundle.
 - `capabilities/default.json` → `shell:allow-execute` with `{ "name": "binaries/yt-dlp", "sidecar": true }`
   entries. In Tauri v2 the shell scope lives in the capabilities file, not in `tauri.conf.json`.
   Grab spawns the sidecars from Rust (`app.shell().sidecar("yt-dlp")`), so the scope is only needed

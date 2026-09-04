@@ -43,9 +43,16 @@ file is for working on the code.
   Optional fields use `%(field|null)j` — without `|null` a missing field renders as bare `NA` and
   breaks the JSON. Because `--print` implies `--quiet`, progress goes to **stderr**; both streams are
   parsed identically. Final path comes from `--print after_move:GRAB_FILE:%(filepath)j`.
-- **Sidecars**: `bundle.externalBin` lists `binaries/yt-dlp` and `binaries/ffmpeg`, but the Rust
-  `Shell::sidecar()` call must receive the bare name (`yt-dlp`) because Tauri copies sidecars flat
-  next to the exe. ffmpeg's path is passed explicitly via `--ffmpeg-location`.
+- **Sidecars**: `bundle.externalBin` lists `binaries/yt-dlp`, `binaries/ffmpeg` and `binaries/qjs`,
+  but the Rust `Shell::sidecar()` call must receive the bare name (`yt-dlp`) because Tauri copies
+  sidecars flat next to the exe. `sidecar::common_args()` adds `--ffmpeg-location` and
+  `--js-runtimes quickjs:<path>` to every yt-dlp call — yt-dlp needs a JS runtime for YouTube
+  (QuickJS-NG ≥ 0.12; Deno is the only default and we don't ship it).
+- **Testing yt-dlp args by hand**: do NOT paste the command into PowerShell 5.1 — it strips the
+  embedded `"` in `--progress-template` and the JSON comes out with bare keys. Use
+  `node scripts/smoke-ytdlp.mjs [url] [video]` instead — it spawns from Node (same quoting rules as
+  Rust's `Command`), runs the real templates, and fails if any line doesn't parse. Keep its template
+  strings in sync with `src-tauri/src/progress.rs`.
 - **Quick-queue vs staged.** Ctrl/⌘+V, drag-drop, and the clipboard chip create a job immediately
   with `metaPending: true` (title = URL) and resolve metadata in the background; the scheduler skips
   pending jobs, and playlists are expanded into one job per entry. The composer (`UrlInput`) instead

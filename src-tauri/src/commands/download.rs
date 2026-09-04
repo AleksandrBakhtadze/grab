@@ -135,10 +135,7 @@ pub fn build_args(req: &DownloadRequest) -> Vec<String> {
         },
     ];
 
-    if let Some(ff) = sidecar::ffmpeg_path() {
-        a.push("--ffmpeg-location".into());
-        a.push(ff.to_string_lossy().into_owned());
-    }
+    a.extend(sidecar::common_args());
 
     if o.mode == "audio" {
         a.push("-f".into());
