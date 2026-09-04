@@ -10,6 +10,9 @@ import { HistoryView } from "@/components/HistoryView";
 import { SettingsView } from "@/components/SettingsView";
 import { LegalDialog } from "@/components/LegalDialog";
 import { Toast } from "@/components/Toast";
+import { Splash } from "@/components/Splash";
+import { UpdateBanner } from "@/components/UpdateBanner";
+import { useUpdater } from "@/lib/updater";
 import { useClipboardWatch } from "@/hooks/useClipboardWatch";
 import { useDropUrls } from "@/hooks/useDropUrls";
 import { useShortcuts } from "@/hooks/useShortcuts";
@@ -30,11 +33,16 @@ export default function App() {
   const reduced = useReducedMotion();
   const [os, setOs] = useState<"macos" | "windows" | "linux" | "other">("other");
 
+  const checkUpdate = useUpdater((s) => s.check);
+
   useEffect(() => {
     void osPlatform().then(setOs);
     void hydrateHistory();
     void hydrateQueue();
-  }, [hydrateHistory, hydrateQueue]);
+    // Silent update check a moment after boot so it never competes with the splash.
+    const t = setTimeout(() => void checkUpdate({ silent: true }), 2500);
+    return () => clearTimeout(t);
+  }, [hydrateHistory, hydrateQueue, checkUpdate]);
 
   // Raising the concurrency limit should start waiting items immediately.
   useEffect(() => {
@@ -50,6 +58,7 @@ export default function App() {
       <LayoutGroup>
         <div className="flex h-full flex-col bg-surface text-fg">
           <Titlebar os={os} />
+          <UpdateBanner />
 
           <main className="relative min-h-0 flex-1">
             <AnimatePresence mode="wait" initial={false}>
@@ -100,6 +109,7 @@ export default function App() {
           </main>
         </div>
         <LegalDialog />
+        <Splash />
       </LayoutGroup>
     </TooltipProvider>
   );

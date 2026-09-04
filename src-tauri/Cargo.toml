@@ -1,8 +1,8 @@
 [package]
 name = "grab"
-version = "0.1.0"
+version = "0.2.0"
 description = "Grab — a calm, dense desktop media downloader built on yt-dlp"
-authors = ["Grab contributors"]
+authors = ["Aleksandre Bakhtadze"]
 license = "MIT"
 edition = "2021"
 rust-version = "1.77"
@@ -23,7 +23,9 @@ tauri-plugin-clipboard-manager = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-opener = "2"
 tauri-plugin-os = "2"
-serde = { version = "1", features = ["derive"] }
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
+serde ={ version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["sync", "rt", "macros", "time", "process"] }
 thiserror = "2"

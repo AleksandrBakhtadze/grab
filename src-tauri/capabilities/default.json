@@ -34,6 +34,8 @@
     "clipboard-manager:allow-read-text",
     "dialog:allow-open",
     "opener:default",
-    "os:default"
+    "os:default",
+    "updater:default",
+    "process:allow-restart"
   ]
 }

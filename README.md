@@ -1,6 +1,6 @@
 # Grab
 
-A calm, dense desktop media downloader. Tauri v2 (Rust) + React 18 + TypeScript,
+Made by **Aleksandre Bakhtadze**. A calm, dense desktop media downloader. Tauri v2 (Rust) + React 18 + TypeScript,
 with yt-dlp and ffmpeg bundled as sidecars. Paste links, pick a quality, watch
 the queue fill your Downloads folder.
 
@@ -210,11 +210,30 @@ chmod +x src-tauri/binaries/*
 
 ---
 
-## GitHub Actions
+## Releases and auto-update
 
-`.github/workflows/build-windows.yml` runs on `windows-latest` for tags `v*` (and manual
-dispatch): installs Node + Rust, fetches sidecars, `npm run tauri build`, uploads the `.exe` and
-`.msi` as workflow artifacts, and attaches them to the GitHub Release for tags.
+Grab updates itself. On launch it reads
+`https://github.com/AleksandrBakhtadze/grab/releases/latest/download/latest.json`; if it lists a
+newer version, a banner offers a one-click update. The installer is verified against the public
+key embedded in `tauri.conf.json` before it runs, then the app relaunches.
+
+To ship a new version:
+
+```powershell
+npm.cmd version 0.3.0 --no-git-tag-version            # bumps package.json
+# also set "version" in src-tauri/tauri.conf.json and src-tauri/Cargo.toml
+git commit -am "Release 0.3.0"
+git tag v0.3.0
+git push origin main --tags
+```
+
+The tag triggers `.github/workflows/build-windows.yml`, which builds on `windows-latest`, signs
+the installers with the `TAURI_SIGNING_PRIVATE_KEY` / `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
+repository secrets, and publishes a GitHub Release containing the `.exe`, `.msi`, their `.sig`
+files, and `latest.json`. A manual "Run workflow" builds without publishing.
+
+**Keep the private key safe.** It lives at `~/.tauri/grab.key` (password in `grab.key.password`).
+If it is lost, installed copies can never verify another update and users must reinstall by hand.
 
 ---
 

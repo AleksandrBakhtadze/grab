@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { FolderOpen, RefreshCw, Scale } from "lucide-react";
+import { FolderOpen, RefreshCw, Scale, Sparkles } from "lucide-react";
 import type { CookieBrowser, Theme } from "@/types";
-import { api, isTauri, pickDirectory } from "@/lib/tauri";
+import { api, isTauri, openExternal, pickDirectory } from "@/lib/tauri";
+import { appVersion, useUpdater } from "@/lib/updater";
 import { useSettings } from "@/stores/settings";
 import { useUi } from "@/stores/ui";
 import { Button } from "@/components/ui/button";
@@ -39,8 +40,11 @@ export function SettingsView() {
   const [ffmpeg, setFfmpeg] = useState<string>("…");
   const [updating, setUpdating] = useState(false);
   const [updateLog, setUpdateLog] = useState<string | null>(null);
+  const [version, setVersion] = useState("…");
+  const upd = useUpdater();
 
   useEffect(() => {
+    void appVersion().then(setVersion);
     void s.ensureOutputDir();
     if (!isTauri) {
       setYtdlp("n/a (browser)");
@@ -194,6 +198,33 @@ export function SettingsView() {
           {updateLog && <pre className="mt-2 max-h-32 overflow-auto rounded-md border border-border bg-surface p-2 font-mono text-2xs text-fg-muted select-text">{updateLog}</pre>}
         </Section>
 
+        <Section title="App updates" hint="Grab checks GitHub Releases on launch. Updates are signed and verified before they run.">
+          <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-sunken px-3 py-2 text-xs">
+            <span>
+              Grab <span className="num font-mono text-fg-muted">{version}</span>
+            </span>
+            <span className="text-fg-muted">
+              {upd.phase === "checking" && "Checking…"}
+              {upd.phase === "upToDate" && "You're on the latest version."}
+              {upd.phase === "available" && `Version ${upd.version} is available.`}
+              {(upd.phase === "downloading" || upd.phase === "installing" || upd.phase === "ready") && "Updating…"}
+              {upd.phase === "error" && `Couldn't check: ${upd.error}`}
+            </span>
+            <div className="ml-auto flex gap-2">
+              {upd.phase === "available" ? (
+                <Button size="sm" onClick={() => void upd.install()}>
+                  <Sparkles className="h-3.5 w-3.5" /> Update to {upd.version}
+                </Button>
+              ) : (
+                <Button size="sm" variant="secondary" onClick={() => void upd.check()} disabled={upd.phase === "checking" || !isTauri}>
+                  <RefreshCw className={upd.phase === "checking" ? "h-3.5 w-3.5 animate-spin motion-reduce:animate-none" : "h-3.5 w-3.5"} />
+                  Check for updates
+                </Button>
+              )}
+            </div>
+          </div>
+        </Section>
+
         <Section title="Responsible use">
           <div className="flex gap-3 rounded-md border border-border bg-sunken p-3 text-xs leading-[18px] text-fg-muted">
             <Scale className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
@@ -202,7 +233,12 @@ export function SettingsView() {
         </Section>
 
         <div className="mt-8 flex items-center justify-between text-2xs text-fg-faint">
-          <span>Grab 0.1.0 · built on yt-dlp + ffmpeg · MIT</span>
+          <span>
+            Grab {version} · made by <span className="text-fg-muted">Aleksandre Bakhtadze</span> · built on yt-dlp + ffmpeg ·{" "}
+            <button type="button" className="hover:text-fg focus-ring rounded-sm" onClick={() => void openExternal("https://github.com/AleksandrBakhtadze/grab")}>
+              GitHub
+            </button>
+          </span>
           <button type="button" className="hover:text-fg focus-ring rounded-sm" onClick={() => s.reset()}>
             Reset settings
           </button>

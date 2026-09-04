@@ -16,6 +16,7 @@ file is for working on the code.
 | Fetch sidecars | `npm.cmd run sidecars` | Downloads yt-dlp + ffmpeg into `src-tauri/binaries/` with the target-triple suffix. Never committed. |
 | Rust tests | `cd src-tauri; cargo test` | Progress-parser tests in `src/progress.rs`. Also needs the linker. |
 | Windows installers | GitHub Actions → "Build Windows installer" (`.github/workflows/build-windows.yml`) | `gh workflow run build-windows.yml --ref main`, then `gh run watch <id>` and `gh run download <id>`. |
+| Publish a release | bump version in `package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` (+ Cargo.lock), commit, `git tag vX.Y.Z`, `git push origin main --tags` | Tag push runs `tauri-apps/tauri-action`, signs with the repo secrets, and publishes a Release with `latest.json` that the in-app updater reads. |
 
 ### Environment quirks on this machine
 
@@ -77,6 +78,16 @@ file is for working on the code.
 - **Rust**: commands return `Result<T, FriendlyError>`; never `unwrap` on user-influenced data.
   Async commands that take `State<'_, _>` must return `Result` (Tauri requirement).
 - Keep the legal notice (`LEGAL_TEXT` in `LegalDialog.tsx`) in both the first-run dialog and Settings.
+- **Updater** (`src/lib/updater.ts`, `UpdateBanner.tsx`): silent check 2.5 s after boot, manual
+  check in Settings. Endpoint + public key are in `tauri.conf.json` → `plugins.updater`. The
+  private key is at `~/.tauri/grab.key` (never commit it); GitHub secrets
+  `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` must exist for tag builds.
+  The repo must stay **public** or the updater cannot fetch `latest.json`.
+- **Version lives in three places** and must match: `package.json`, `src-tauri/tauri.conf.json`,
+  `src-tauri/Cargo.toml` (and the `grab` entry in `Cargo.lock`). The updater compares against
+  `tauri.conf.json`'s version.
+- Author credit ("Aleksandre Bakhtadze") appears in the splash, the Settings footer, `bundle.publisher`,
+  and `Cargo.toml` authors — keep them consistent.
 
 ## Commit messages
 
